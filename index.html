@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>フレミングの法則シミュレーション</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #ecf0f1;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .canvas-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .canvas-container {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(100, 200, 255, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    #canvas {
+      width: 100%;
+      height: 400px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      display: block;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #64c8ff;
+      text-shadow: 0 0 10px rgba(100, 200, 255, 0.5);
+    }
+
+    .control-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(100, 200, 255, 0.3);
+      border-radius: 12px;
+      padding: 25px;
+      backdrop-filter: blur(10px);
+      height: fit-content;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .control-label {
+      font-weight: bold;
+      color: #b0e0e6;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .slider-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, #ff6b6b, #4ecdc4);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #64c8ff, #00d4ff);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(100, 200, 255, 0.6);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #64c8ff, #00d4ff);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 10px rgba(100, 200, 255, 0.6);
+    }
+
+    .value-display {
+      background: rgba(100, 200, 255, 0.2);
+      padding: 6px 12px;
+      border-radius: 6px;
+      min-width: 60px;
+      text-align: center;
+      font-weight: bold;
+      color: #00ff88;
+      font-family: 'Courier New', monospace;
+    }
+
+    .direction-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px 16px;
+      border: 2px solid rgba(100, 200, 255, 0.5);
+      background: rgba(100, 200, 255, 0.1);
+      color: #64c8ff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      font-size: 13px;
+    }
+
+    button:hover {
+      background: rgba(100, 200, 255, 0.2);
+      box-shadow: 0 0 15px rgba(100, 200, 255, 0.4);
+    }
+
+    button.active {
+      background: rgba(0, 255, 136, 0.3);
+      border-color: #00ff88;
+      color: #00ff88;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+    }
+
+    .info-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(100, 200, 255, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .info-box {
+      background: rgba(100, 200, 255, 0.1);
+      border-left: 4px solid #64c8ff;
+      padding: 15px;
+      border-radius: 6px;
+    }
+
+    .info-title {
+      font-weight: bold;
+      color: #00ff88;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .info-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #b0e0e6;
+    }
+
+    .vector-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .vector-item {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(100, 200, 255, 0.2);
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .vector-label {
+      font-size: 12px;
+      color: #b0e0e6;
+      margin-bottom: 5px;
+    }
+
+    .vector-value {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #00ff88;
+      font-weight: bold;
+    }
+
+    .description {
+      font-size: 13px;
+      line-height: 1.8;
+      color: #b0e0e6;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      .control-section {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="canvas-section">
+      <div class="title">フレミングの左手の法則シミュレーション</div>
+      <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="info-section">
+        <div class="info-box">
+          <div class="info-title">📋 説明</div>
+          <div class="info-text">
+            フレミングの左手の法則は、磁場の中で電流が流れる導体に作用する力の向きを示します。左手の親指・人差し指・中指を互いに直角になるように立てたとき：
+            <ul style="margin-left: 15px; margin-top: 8px;">
+              <li><strong style="color: #ff6b6b;">人差し指 = 磁場（B）</strong></li>
+              <li><strong style="color: #4ecdc4;">中指 = 電流（I）</strong></li>
+              <li><strong style="color: #00ff88;">親指 = 力（F）</strong></li>
+            </ul>
+          </div>
+        </div>
+        <div class="vector-display" id="vectorDisplay">
+          <div class="vector-item">
+            <div class="vector-label">磁場 (B)</div>
+            <div class="vector-value" id="bVector">-</div>
+          </div>
+          <div class="vector-item">
+            <div class="vector-label">電流 (I)</div>
+            <div class="vector-value" id="iVector">-</div>
+          </div>
+          <div class="vector-item">
+            <div class="vector-label">力 (F)</div>
+            <div class="vector-value" id="fVector">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <div class="title">パラメータ設定</div>
+
+      <div class="control-group">
+        <div class="control-label">磁場方向 (B)</div>
+        <div class="direction-selector" id="magneticDirection">
+          <button data-value="0" class="active">→ (右)</button>
+          <button data-value="1">← (左)</button>
+          <button data-value="2">↑ (上)</button>
+          <button data-value="3">↓ (下)</button>
+          <button data-value="4">⊙ (手前)</button>
+          <button data-value="5">⊗ (奥)</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">電流方向 (I)</div>
+        <div class="direction-selector" id="currentDirection">
+          <button data-value="0">→ (右)</button>
+          <button data-value="1">← (左)</button>
+          <button data-value="2" class="active">↑ (上)</button>
+          <button data-value="3">↓ (下)</button>
+          <button data-value="4">⊙ (手前)</button>
+          <button data-value="5">⊗ (奥)</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">磁場の強さ (|B|)</div>
+        <div class="slider-container">
+          <input type="range" id="magneticStrength" min="0.5" max="3" step="0.1" value="1.5" />
+          <div class="value-display" id="magneticStrengthValue">1.5</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">電流の強さ (|I|)</div>
+        <div class="slider-container">
+          <input type="range" id="currentStrength" min="0.5" max="3" step="0.1" value="1.5" />
+          <div class="value-display" id="currentStrengthValue">1.5</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-title">⚡ 計算式</div>
+        <div class="info-text">
+          <strong>F = I × B</strong><br/>
+          （外積によるベクトル計算）<br/><br/>
+          力の大きさ：<br/>
+          |F| = |I| × |B| × sin(θ)
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-title">💡 ヒント</div>
+        <div class="info-text">
+          左手の親指・人差し指・中指を互いに直角になるように立てて、人差し指を磁場方向、中指を電流方向に合わせると、親指が力の方向を示します。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
